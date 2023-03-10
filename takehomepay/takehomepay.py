@@ -22,7 +22,7 @@ class TakeHomePayBase:
             return tax
 
     def _calculate_higher_tax(self, gross, deductions):
-        gross_minus_deductions = min(gross - deductions - self.basic_rate, self.higher_rate - self.personal_allowance) 
+        gross_minus_deductions = min(gross - deductions - self.basic_rate, self.higher_rate - self.basic_rate)
         if gross_minus_deductions < 0:
             return 0
         else:
