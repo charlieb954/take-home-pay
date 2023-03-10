@@ -1,0 +1,37 @@
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "takehomepay"
+version = "0.1.0"
+description = "A Python package to work out tax, pension and national insurance contributions in the UK by year."
+readme = "README.rst"
+authors = [{ name = "Charlie B" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["takehomepay"]
+dependencies = [
+    "pip==19.2.3",
+    "bump2version==0.5.11",
+    "wheel==0.33.6",
+    "watchdog==0.9.0",
+    "flake8==3.7.8",
+    "tox==3.14.0",
+    "coverage==4.5.4",
+    "Sphinx==1.8.5",
+    "twine==1.14.0",
+    "pytest==6.2.4",
+]
+requires-python = ">=3.7"
+
+    [project.optional-dependencies]
+    build = ["build", "twine"]
+    dev   = ["black", "bumpver", "isort", "mypy", "pytest"]
+
+    [project.urls]
+    repository    = "https://github.com/charlieb954/takehomepay"
