@@ -3,4 +3,5 @@ from takehomepay import takehomepay
 
 
 def test_twentytwentytwo():
-    assert takehomepay.TwentyTwentyTwo()
+    tt = takehomepay.TwentyTwentyTwo()
+    print(tt.calculate_tax(25_000, 0))

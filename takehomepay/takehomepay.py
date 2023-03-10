@@ -13,24 +13,36 @@ class TakeHomePayBase:
     lower_earnings_limit_ni: int  # 0% up to this limit
     upper_earnings_limit_ni: int  # 12% up to this limit, then 2% after
 
-    def calculate_tax(self, gross, deductions):
-        gross_minus_deductions = gross - deductions
-        if gross_minus_deductions < self.personal_allowance:
+    def _calculate_basic_tax(self, gross, deductions):
+        gross_minus_deductions = min(gross - deductions - self.personal_allowance, self.basic_rate - self.personal_allowance)
+        if gross_minus_deductions < 0:
             return 0
-
-        elif gross_minus_deductions < self.basic_rate:
-            gross_minus_deductions = gross_minus_deductions - self.personal_allowance
-            tax = (gross_minus_deductions / 100) * 20
+        else:
+            tax = (gross_minus_deductions / 100) * self.basic_rate_percentage
             return tax
 
-    def calculate_national_insurance(self, gross, freq: str = "yearly"):
-        """calulate national insurance contributions.
+    def _calculate_higher_tax(self, gross, deductions):
+        gross_minus_deductions = min(gross - deductions - self.basic_rate, self.higher_rate - self.personal_allowance) 
+        if gross_minus_deductions < 0:
+            return 0
+        else:
+            tax = (gross_minus_deductions / 100) * self.higher_rate_percentage
+            return tax
 
-        Args
-            sal: int = salary
-        Returns
-            float: weekly national insurnace payment
-        """
+    def _calculate_additional_tax(self, gross, deductions):
+        return 0
+
+    def calculate_tax(self, gross, deductions):
+        basic_tax = self._calculate_basic_tax(gross, deductions)
+        deductions += basic_tax
+        higher_tax = self._calculate_higher_tax(gross, deductions)
+        deductions += higher_tax
+        additional_tax = self._calculate_additional_tax(gross, deductions)
+        total_tax = basic_tax + higher_tax + additional_tax
+
+        return total_tax
+
+    def calculate_national_insurance(self, gross, freq: str = "yearly"):
         weekly = gross / 52
 
         if int(weekly) in range(0, 184):
