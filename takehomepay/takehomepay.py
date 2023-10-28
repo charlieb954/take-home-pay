@@ -10,7 +10,8 @@ class TakeHomePayBase:
     basic_rate_percentage: int
     higher_rate_percentage: int
     additional_rate_percentage: int
-    national_insurance_rate: int
+    national_insurance_rate_lower: int
+    national_insurance_rate_upper: int
     lower_earnings_limit_ni: int  # 0% up to this limit
     upper_earnings_limit_ni: int  # 12% up to this limit, then 2% after
 
@@ -19,16 +20,18 @@ class TakeHomePayBase:
 
         Args:
             gross (float): gross salary
-            deductions (float): any non taxable deductions
+            deductions (float): any non taxable deductions such as pension and NI
 
         Returns:
             float: value of basic rate tax
         """
         gross_minus_deductions = min(
             gross - deductions - self.personal_allowance,
-            self.basic_rate - self.personal_allowance,
+            self.basic_rate
+            - self.personal_allowance,  # this is the most you can pay at this rate
         )
-        if gross_minus_deductions < 0:
+
+        if gross_minus_deductions <= 0:
             return 0.0
         else:
             tax = (gross_minus_deductions / 100) * self.basic_rate_percentage
@@ -46,10 +49,12 @@ class TakeHomePayBase:
         """
         if gross > 100_000:  # lose personal allowance if greater than 100k
             self._calculate_tax_code(gross)
-            ## HANDLE THIS
 
         gross_minus_deductions = min(
-            gross - deductions - self.basic_rate, self.higher_rate - self.basic_rate
+            gross - deductions - self.basic_rate,
+            self.higher_rate
+            - self.basic_rate
+            - self.personal_allowance,  # most you can pay at this rate
         )
 
         if gross_minus_deductions < 0:
@@ -130,39 +135,55 @@ class TakeHomePayBase:
         Returns:
             float: _description_
         """
-        weekly = gross / 52
 
-        if int(weekly) in range(0, 190):
+        weekly = round(gross / 52, 2)
+
+        if int(weekly) in range(0, self.lower_earnings_limit_ni):
             ni = 0
 
-        elif int(weekly) in range(190, 967):
-            ni = (weekly - 190) * 0.12
+        elif int(weekly) in range(
+            self.lower_earnings_limit_ni, self.upper_earnings_limit_ni
+        ):
+            ni = (
+                weekly - self.lower_earnings_limit_ni
+            ) * self.national_insurance_rate_lower
 
         else:
-            ni = (779 * 0.12) + ((weekly - 779 - 183) * 0.02)
+            ni = (
+                (self.upper_earnings_limit_ni - self.lower_earnings_limit_ni)
+                * self.national_insurance_rate_lower
+            ) + (
+                (
+                    weekly
+                    - (self.upper_earnings_limit_ni - self.lower_earnings_limit_ni)
+                    - self.lower_earnings_limit_ni
+                )
+                * self.national_insurance_rate_upper
+            )
 
         if freq == "yearly":
-            return ni * 52
+            return round(ni * 52, 2)
 
         elif freq == "weekly":
-            return ni
+            return round(ni, 2)
 
     def calculate_pension(self):
         pass
 
 
 @dataclass
-class TwentyTwentyTwo(TakeHomePayBase):
+class TwentyTwentyThree(TakeHomePayBase):
     personal_allowance: int = 12_570
     personal_allowance_upper: int = 100_000
     basic_rate: int = 50_270
-    higher_rate: int = 150_000
+    higher_rate: int = 125_140
     basic_rate_percentage: int = 20
     higher_rate_percentage: int = 40
     additional_rate_percentage: int = 45
-    national_insurance_rate: int = 5
-    lower_earnings_limit_ni: int = 6  # 0% up to this limit
-    upper_earnings_limit_ni: int = 7  # 12% up to this limit, then 2% after
+    national_insurance_rate_lower: int = 0.12
+    national_insurance_rate_upper: int = 0.02
+    lower_earnings_limit_ni: int = 242  # 0% up to this limit
+    upper_earnings_limit_ni: int = 967  # 12% up to this limit, then 2% after
 
     def __post_init__(self) -> None:
         super().__init__(
@@ -173,7 +194,8 @@ class TwentyTwentyTwo(TakeHomePayBase):
             self.basic_rate_percentage,
             self.higher_rate_percentage,
             self.additional_rate_percentage,
-            self.national_insurance_rate,
+            self.national_insurance_rate_lower,
+            self.national_insurance_rate_upper,
             self.lower_earnings_limit_ni,
             self.upper_earnings_limit_ni,
         )
