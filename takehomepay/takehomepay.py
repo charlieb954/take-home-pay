@@ -164,7 +164,7 @@ class TakeHomePayBase:
         if freq == "yearly":
             return round(ni * 52, 2)
 
-        elif freq == "weekly":
+        else:  # else return weekly
             return round(ni, 2)
 
     def calculate_pension(self):
